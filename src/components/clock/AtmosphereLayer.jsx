@@ -1,5 +1,5 @@
 import React from "react";
-import Bubbles from "src/components/clock/Bubbles";
+import Bubbles from "@/components/clock/Bubbles";
 
 
 const BG_URL = "/background.png";

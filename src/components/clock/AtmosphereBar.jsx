@@ -1,5 +1,5 @@
 import React from "react";
-import { MOODS } from "src/components/clock/AtmosphereLayer";
+import { MOODS } from "@/components/clock/AtmosphereLayer";
 /** @type {("mist" | "rain" | "dawn" | "void")[]} */
 const ORDER = ["mist", "rain", "dawn", "void"];
 /**

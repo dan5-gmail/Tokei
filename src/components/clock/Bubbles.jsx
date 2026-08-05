@@ -19,18 +19,20 @@ export default function Bubbles() {
         <span
           key={i}
           className="absolute rounded-full"
-          style={{
-            width: b.size,
-            height: b.size,
-            left: b.left,
-            bottom: `-${b.size}px`,
-            background:
-              "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.18), rgba(94,234,212,0.08) 50%, transparent 70%)",
-            border: "1px solid rgba(226,232,240,0.06)",
-            backdropFilter: "blur(4px)",
-            animation: `bubble-rise ${b.dur}s ease-in-out ${b.delay}s infinite`,
-            ["--drift"]: `${b.drift}px`,
-          }}
+          style={
+            /** @type {any} */ ({
+              width: b.size,
+              height: b.size,
+              left: b.left,
+              bottom: `-${b.size}px`,
+              background:
+                "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.18), rgba(94,234,212,0.08) 50%, transparent 70%)",
+              border: "1px solid rgba(226,232,240,0.06)",
+              backdropFilter: "blur(4px)",
+              animation: `bubble-rise ${b.dur}s ease-in-out ${b.delay}s infinite`,
+              "--drift": `${b.drift}px`,
+            })
+          }
         />
       ))}
     </div>
