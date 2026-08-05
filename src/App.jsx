@@ -3,7 +3,7 @@ import Home from "./pages/Home.jsx";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Tokei">
       <Routes>
         <Route path="/" element={<Home />} />
       </Routes>
