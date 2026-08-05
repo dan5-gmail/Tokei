@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import AtmosphereLayer from "@/components/clock/AtmosphereLayer";
 import JSTClock from "@/components/clock/JSTClock";
@@ -137,8 +138,8 @@ function ModeBtn({ active, onClick, children }) {
     <button
       onClick={onClick}
       className={`min-h-[40px] px-6 rounded-full text-sm tracking-[0.3em] transition-all duration-500 ${active
-          ? "bg-slate-100/10 text-slate-100"
-          : "text-slate-400/60 hover:text-slate-200"
+        ? "bg-slate-100/10 text-slate-100"
+        : "text-slate-400/60 hover:text-slate-200"
         }`}
     >
       {children}

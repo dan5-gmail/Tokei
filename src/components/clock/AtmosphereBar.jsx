@@ -1,8 +1,15 @@
 import React from "react";
-import { MOODS } from "../../../AtmosphereLayer";
-
+import { MOODS } from "src/components/clock/AtmosphereLayer";
+/** @type {("mist" | "rain" | "dawn" | "void")[]} */
 const ORDER = ["mist", "rain", "dawn", "void"];
-
+/**
+ * @param {{
+ *   mood: string,
+ *   setMood: (mood:string)=>void,
+ *   soundOn: boolean,
+ *   setSoundOn: (value:boolean)=>void
+ * }} props
+ */
 export default function AtmosphereBar({ mood, setMood, soundOn, setSoundOn }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-10 py-5 pointer-events-none">

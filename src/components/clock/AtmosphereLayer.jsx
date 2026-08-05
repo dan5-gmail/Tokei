@@ -1,5 +1,5 @@
 import React from "react";
-import Bubbles from "./Bubbles";
+import Bubbles from "src/components/clock/Bubbles";
 
 
 const BG_URL = "/background.png";
@@ -37,7 +37,12 @@ const MOODS = {
 
 };
 
-
+/**
+ * @param {{
+ *   mood: "mist" | "rain" | "dawn" | "void",
+ *   hour: number
+ * }} props
+ */
 export default function AtmosphereLayer({
   mood,
   hour,
@@ -157,6 +162,5 @@ export default function AtmosphereLayer({
 
   );
 }
-
 
 export { MOODS };

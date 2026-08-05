@@ -1,10 +1,11 @@
 import * as React from "react";
 
+// @ts-ignore
 export function useSize(ref) {
-  const [size, setSize] = React.useState(null);
+  const [size, setSize] = React.useState({ width: 0, height: 0 });
 
   React.useLayoutEffect(() => {
-    const element = ref.current;
+    const element = ref ? ref.current : null;
 
     if (!element) return;
 

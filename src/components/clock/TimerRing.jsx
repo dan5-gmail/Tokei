@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 const RADIUS = 150;
 const STROKE = 6;
 const SIZE = (RADIUS + STROKE) * 2;
-
+/**
+ * @param {number} seconds
+ */
 function descriptorFor(seconds) {
   if (seconds <= 0) return "時を整える";
   if (seconds < 60) return "ひと息のあいだ";
@@ -13,7 +15,9 @@ function descriptorFor(seconds) {
   if (seconds < 1800) return "半刻の沈潜";
   return "長い旅路";
 }
-
+/**
+ * @param {number} seconds
+ */
 function fmt(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -25,6 +29,7 @@ export default function TimerRing() {
   const [remaining, setRemaining] = useState(300);
   const [running, setRunning] = useState(false);
   const [ended, setEnded] = useState(false);
+  /** @type {React.RefObject<SVGSVGElement>} */
   const svgRef = useRef(null);
   const draggingRef = useRef(false);
 
@@ -53,21 +58,28 @@ export default function TimerRing() {
     return () => clearTimeout(id);
   }, [ended]);
 
-  const angleFromEvent = useCallback((clientX, clientY) => {
-    const svg = svgRef.current;
-    if (!svg) return 0;
-    const rect = svg.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = clientX - cx;
-    const dy = clientY - cy;
-    // 0 deg at top, clockwise
-    let ang = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-    if (ang < 0) ang += 360;
-    return ang;
-  }, []);
+  const angleFromEvent = useCallback(  /**
+   * @param {number} clientX
+   * @param {number} clientY
+   */
+    (clientX, clientY) => {
+      const svg = svgRef.current;
+      if (!svg) return 0;
+      const rect = svg.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      // 0 deg at top, clockwise
+      let ang = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+      if (ang < 0) ang += 360;
+      return ang;
+    }, []);
 
-  const secondsFromAngle = useCallback(
+
+  const secondsFromAngle = useCallback(  /**
+   * @param {number} ang
+   */
     (ang) => {
       // full circle = 60 minutes = 3600s; min 10s
       let secs = Math.round((ang / 360) * 3600);
@@ -78,7 +90,9 @@ export default function TimerRing() {
     },
     []
   );
-
+  /**
+   * @param {React.PointerEvent} e
+   */
   const onPointerDown = (e) => {
     if (running) return;
     draggingRef.current = true;
@@ -89,7 +103,9 @@ export default function TimerRing() {
     setRemaining(secs);
     setEnded(false);
   };
-
+  /**
+   * @param {React.PointerEvent} e
+   */
   const onPointerMove = (e) => {
     if (!draggingRef.current || running) return;
     const ang = angleFromEvent(e.clientX, e.clientY);
@@ -102,6 +118,9 @@ export default function TimerRing() {
     draggingRef.current = false;
   };
 
+  /**
+   * @param {React.KeyboardEvent} e
+   */
   // keyboard: arrow up/down adjust minutes when not running
   const onKeyDown = (e) => {
     if (running) return;
@@ -304,7 +323,9 @@ export default function TimerRing() {
 // gentle singing-bowl-like chime using WebAudio
 function playChime() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+  /** @type {any} */ (window).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const now = ctx.currentTime;
