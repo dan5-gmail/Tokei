@@ -193,3 +193,101 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ==========================================
+   BGM Control Panel Styles
+   ========================================== */
+
+/* ボトムコントローラーのラッパー */
+.bgm-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  color: hsl(var(--foreground));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bgm-control-group:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 再生・停止ボタン */
+.bgm-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bgm-play-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.bgm-play-btn:active {
+  transform: scale(0.95);
+}
+
+/* 音量スライダーコンテナ */
+.bgm-volume-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* カスタムレンジスライダー */
+.bgm-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 4.5rem;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.bgm-volume-slider:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bgm-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: hsl(var(--foreground));
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.bgm-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+.bgm-volume-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: hsl(var(--foreground));
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}

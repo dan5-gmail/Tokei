@@ -8,30 +8,25 @@
   <!-- サイトタイトル -->
   <title>Chronometer | 流れる時間</title>
 
-  <!-- ✅ アイコン・PWA設定 (ここを完全に差し替え) ✅ -->
-
-  <!-- 1. Apple / iOS (ホーム画面追加・Safari) 用 (最も重要) -->
-  <!-- 端末ごとの強制リサイズとアスペクト比歪みを防ぐ -->
+  <!-- ✅ アイコン・PWA設定 ✅ -->
+  <!-- 1. Apple / iOS (ホーム画面追加・Safari) 用 -->
   <link rel="apple-touch-icon" href="/favicon.png" />
 
   <!-- 2. 標準の Favicon (PCのタブ・ブックマーク用) -->
-  <!-- Appleが嫌うサイズ設定を避け、標準的なPNGとして指定 -->
   <link rel="icon" type="image/png" href="/favicon.png" sizes="192x192" />
 
   <!-- 3. Web App Manifest (Android / PWAの起動設定用) -->
-  <!-- ホーム画面追加時の動作、テーマカラー、アイコンを詳細定義 -->
   <link rel="manifest" href="/manifest.json" />
 
   <!-- 4. iOSのスタンドアローンモード設定 -->
-  <!-- ホーム画面から起動した際、Safariのツールバーを消す -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Chronometer" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <!-- 5. テーマカラー (アドレスバーやステータスバーの色) -->
+  <!-- 5. テーマカラー -->
   <meta name="theme-color" content="#0b0b12" />
 
-  <!-- ✅ フォント読み込み (変更なし) ✅ -->
+  <!-- ✅ フォント読み込み ✅ -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
@@ -39,8 +34,78 @@
 </head>
 
 <body>
+  <!-- React アプリケーション展開領域 -->
   <div id="root"></div>
 
+  <!-- ✅ BGM 音声要素（非表示） -->
+  <!-- public/audio/bgm.mp3 に音声ファイルを配置してください -->
+  <audio id="bgm-audio" loop preload="auto">
+    <source src="/audio/bgm.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- ✅ BGM コントローラーUI（React外でHTML直書きにする場合の固定配置要素） -->
+  <div class="fixed bottom-6 right-6 z-50">
+    <div class="bgm-control-group">
+      <!-- 再生/停止ボタン -->
+      <button id="bgm-play-btn" class="bgm-play-btn" aria-label="BGM再生/停止">
+        <svg id="bgm-icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="ml-0.5">
+          <polygon points="5,3 19,12 5,21" />
+        </svg>
+        <svg id="bgm-icon-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+      </button>
+
+      <!-- 音量スライダー -->
+      <div class="bgm-volume-container">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          class="opacity-60">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+        </svg>
+        <input type="range" id="bgm-volume-slider" min="0" max="1" step="0.01" value="0.4" class="bgm-volume-slider"
+          aria-label="BGM音量" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ BGM制御用スクリプト（Vanilla JS制御時） -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const audio = document.getElementById('bgm-audio');
+      const playBtn = document.getElementById('bgm-play-btn');
+      const iconPlay = document.getElementById('bgm-icon-play');
+      const iconPause = document.getElementById('bgm-icon-pause');
+      const volumeSlider = document.getElementById('bgm-volume-slider');
+
+      if (!audio || !playBtn || !volumeSlider) return;
+
+      // 初期音量
+      audio.volume = volumeSlider.value;
+
+      // 再生 / 停止
+      playBtn.addEventListener('click', () => {
+        if (audio.paused) {
+          audio.play().then(() => {
+            iconPlay.classList.add('hidden');
+            iconPause.classList.remove('hidden');
+          }).catch(err => console.log('再生制限:', err));
+        } else {
+          audio.pause();
+          iconPlay.classList.remove('hidden');
+          iconPause.classList.add('hidden');
+        }
+      });
+
+      // 音量調整
+      volumeSlider.addEventListener('input', (e) => {
+        audio.volume = e.target.value;
+      });
+    });
+  </script>
+
+  <!-- Vite エントリーポイント -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
