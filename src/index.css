@@ -56,6 +56,28 @@
 
 body {
   margin: 0;
+  width: 100vw;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  background-color: #0b0c10; /* 画像ロード前のバックアップ色 */
+}
+
+/* 背景画像の全画面配置・ぼかし処理 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: url('/background.png'); /* 実際の画像パスを指定してください */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(16px) brightness(0.7); /* ぼかし強度と明るさ（お好みで変更可） */
+  transform: scale(1.05); /* ぼかしによる画面端の透過防止 */
 }
 
 #root {
@@ -71,4 +93,50 @@ body {
   background: transparent; /* 明示的に透明化 */
 }
 
-/* 以下 h1, h2, p, code などはそのまま */
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
