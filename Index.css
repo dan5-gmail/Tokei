@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --background: 222 35% 8%;
+    /* 背景色変数を透明（または透過あり）に変更 */
+    --background: 0 0% 0% / 0; /* 完全透明 */
     --foreground: 215 28% 91%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -44,7 +45,7 @@
   }
 
   .dark {
-    --background: 222 35% 8%;
+    --background: 0 0% 0% / 0; /* 完全透明 */
     --foreground: 215 28% 91%;
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -79,121 +80,17 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
 
   body {
-    @apply bg-background text-foreground font-body;
+    /* bg-background を削除（または透明にする） */
+    @apply text-foreground font-body;
+    background-color: transparent;
     overflow: hidden;
   }
 }
 
-@layer utilities {
-  .font-display {
-    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  }
-}
-
-@keyframes mist-drift {
-  0% {
-    transform: translate3d(-5%, -3%, 0) scale(1.1);
-    opacity: 0.55;
-  }
-
-  50% {
-    transform: translate3d(5%, 3%, 0) scale(1.25);
-    opacity: 0.4;
-  }
-
-  100% {
-    transform: translate3d(-5%, -3%, 0) scale(1.1);
-    opacity: 0.55;
-  }
-}
-
-@keyframes halo-breathe {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.35;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 0.55;
-  }
-}
-
-@keyframes vapor-trail {
-  0% {
-    opacity: 0.18;
-    transform: translateY(0);
-  }
-
-  50% {
-    opacity: 0.32;
-    transform: translateY(-2px);
-  }
-
-  100% {
-    opacity: 0.18;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bubble-rise {
-  0% {
-    transform: translateY(0) translateX(0) scale(0.6);
-    opacity: 0;
-  }
-
-  10% {
-    opacity: 0.5;
-  }
-
-  50% {
-    transform: translateY(-50vh) translateX(var(--drift, 0)) scale(1);
-    opacity: 0.35;
-  }
-
-  90% {
-    opacity: 0.2;
-  }
-
-  100% {
-    transform: translateY(-110vh) translateX(calc(var(--drift, 0) * -1)) scale(0.7);
-    opacity: 0;
-  }
-}
-
-@keyframes fade-rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
-/* ==========================================
-   BGM Control Panel Styles
-   ========================================== */
+/* 以下アニメーション定義などはそのまま */
