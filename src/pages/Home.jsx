@@ -5,13 +5,14 @@ import JSTClock from "@/components/clock/JSTClock";
 import TimerRing from "@/components/clock/TimerRing";
 import PomodoroRing from "@/components/clock/PomodoroRing";
 import AtmosphereBar from "@/components/clock/AtmosphereBar";
+import MusicPlayer from "@/components/audio/MusicPlayer";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-  const [view, setView] = useState("clock"); // clock | timer
+  const [view, setView] = useState("clock");
   const [mood, setMood] = useState("mist");
-  const [soundOn, setSoundOn] = useState(false);
   const [cursor, setCursor] = useState({ x: -200, y: -200 });
+
   const [hour, setHour] = useState(
     parseInt(
       new Intl.DateTimeFormat("en-GB", {
@@ -23,7 +24,7 @@ export default function Home() {
     )
   );
 
-  // update hour periodically for ambient hue
+  // 時刻を1分ごとに更新
   useEffect(() => {
     const id = setInterval(() => {
       const h = parseInt(
@@ -34,21 +35,27 @@ export default function Home() {
         }).format(new Date()),
         10
       );
+
       setHour(h);
     }, 60000);
+
     return () => clearInterval(id);
   }, []);
 
-  // lofi pulse visual + magnetic cursor (desktop only)
+  // マウスカーソル追従
   const onMove = (e) => {
-    setCursor({ x: e.clientX, y: e.clientY });
+    setCursor({
+      x: e.clientX,
+      y: e.clientY,
+    });
   };
 
   return (
     <div
-      className="relative w-screen h-screen overflow-hidden"
+      className="relative w-full h-screen overflow-hidden bg-slate-950"
       onMouseMove={onMove}
     >
+      {/* Atmosphere */}
       <AtmosphereLayer mood={mood} hour={hour} />
 
       {/* magnetic cursor */}
@@ -65,13 +72,24 @@ export default function Home() {
 
       {/* top mode toggle */}
       <div className="fixed top-6 sm:top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 rounded-full border border-slate-600/15 bg-slate-900/30 backdrop-blur-md">
-        <ModeBtn active={view === "clock"} onClick={() => setView("clock")}>
+        <ModeBtn
+          active={view === "clock"}
+          onClick={() => setView("clock")}
+        >
           時計
         </ModeBtn>
-        <ModeBtn active={view === "timer"} onClick={() => setView("timer")}>
+
+        <ModeBtn
+          active={view === "timer"}
+          onClick={() => setView("timer")}
+        >
           タイマー
         </ModeBtn>
-        <ModeBtn active={view === "pomodoro"} onClick={() => setView("pomodoro")}>
+
+        <ModeBtn
+          active={view === "pomodoro"}
+          onClick={() => setView("pomodoro")}
+        >
           ポモドーロ
         </ModeBtn>
       </div>
@@ -116,12 +134,16 @@ export default function Home() {
         </AnimatePresence>
       </main>
 
+      {/* atmosphere controls */}
       <AtmosphereBar
         mood={mood}
         setMood={setMood}
-        soundOn={soundOn}
-        setSoundOn={setSoundOn}
       />
+
+      {/* Music Player */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <MusicPlayer />
+      </div>
 
       {/* brand mark */}
       <div className="fixed top-6 left-6 sm:left-10 z-20 pointer-events-none">
@@ -138,8 +160,8 @@ function ModeBtn({ active, onClick, children }) {
     <button
       onClick={onClick}
       className={`min-h-[40px] px-6 rounded-full text-sm tracking-[0.3em] transition-all duration-500 ${active
-        ? "bg-slate-100/10 text-slate-100"
-        : "text-slate-400/60 hover:text-slate-200"
+          ? "bg-slate-100/10 text-slate-100"
+          : "text-slate-400/60 hover:text-slate-200"
         }`}
     >
       {children}
