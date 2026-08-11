@@ -77,7 +77,7 @@ body::before {
   z-index: -1; /* 最背面に配置 */
   
   /* 画像の指定（プロジェクトの配置パスに合わせて変更してください） */
-  background-image: url('./assets/background.png');
+  background-image: url('./background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
