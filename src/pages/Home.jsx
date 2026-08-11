@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect } from "react";
 import AtmosphereLayer from "@/components/clock/AtmosphereLayer";
 import JSTClock from "@/components/clock/JSTClock";
 import TimerRing from "@/components/clock/TimerRing";
@@ -52,13 +53,20 @@ export default function Home() {
 
   return (
     <div
-      className="relative w-full h-screen overflow-hidden bg-slate-950"
+      className="relative w-full h-screen overflow-hidden"
       onMouseMove={onMove}
     >
-      {/* Atmosphere */}
-      <AtmosphereLayer mood={mood} hour={hour} />
+      {/* ================================
+          Background / Atmosphere
+          ================================ */}
+      <AtmosphereLayer
+        mood={mood}
+        hour={hour}
+      />
 
-      {/* magnetic cursor */}
+      {/* ================================
+          Magnetic cursor
+          ================================ */}
       <div
         className="pointer-events-none fixed z-30 w-10 h-10 rounded-full blur-xl transition-transform duration-300 ease-out hidden sm:block"
         style={{
@@ -70,7 +78,9 @@ export default function Home() {
         }}
       />
 
-      {/* top mode toggle */}
+      {/* ================================
+          Top mode toggle
+          ================================ */}
       <div className="fixed top-6 sm:top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 rounded-full border border-slate-600/15 bg-slate-900/30 backdrop-blur-md">
         <ModeBtn
           active={view === "clock"}
@@ -94,38 +104,81 @@ export default function Home() {
         </ModeBtn>
       </div>
 
-      {/* main content */}
+      {/* ================================
+          Main content
+          ================================ */}
       <main className="relative z-10 w-full h-full flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
+          {/* 時計 */}
           {view === "clock" ? (
             <motion.section
               key="clock"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
+              initial={{
+                opacity: 0,
+                scale: 0.98,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                scale: 1.02,
+              }}
+              transition={{
+                duration: 1,
+                ease: "easeInOut",
+              }}
               className="w-full"
             >
               <JSTClock />
             </motion.section>
+
           ) : view === "timer" ? (
+            /* タイマー */
             <motion.section
               key="timer"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
+              initial={{
+                opacity: 0,
+                scale: 0.98,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                scale: 1.02,
+              }}
+              transition={{
+                duration: 1,
+                ease: "easeInOut",
+              }}
               className="w-full flex justify-center"
             >
               <TimerRing />
             </motion.section>
+
           ) : (
+            /* ポモドーロ */
             <motion.section
               key="pomodoro"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
+              initial={{
+                opacity: 0,
+                scale: 0.98,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                scale: 1.02,
+              }}
+              transition={{
+                duration: 1,
+                ease: "easeInOut",
+              }}
               className="w-full flex justify-center"
             >
               <PomodoroRing />
@@ -134,18 +187,24 @@ export default function Home() {
         </AnimatePresence>
       </main>
 
-      {/* atmosphere controls */}
+      {/* ================================
+          Atmosphere controls
+          ================================ */}
       <AtmosphereBar
         mood={mood}
         setMood={setMood}
       />
 
-      {/* Music Player */}
+      {/* ================================
+          Music Player
+          ================================ */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
         <MusicPlayer />
       </div>
 
-      {/* brand mark */}
+      {/* ================================
+          Brand mark
+          ================================ */}
       <div className="fixed top-6 left-6 sm:left-10 z-20 pointer-events-none">
         <span className="font-display text-xs tracking-[0.5em] text-slate-400/50 uppercase">
           Chronometer
@@ -155,7 +214,11 @@ export default function Home() {
   );
 }
 
-function ModeBtn({ active, onClick, children }) {
+function ModeBtn({
+  active,
+  onClick,
+  children,
+}) {
   return (
     <button
       onClick={onClick}
