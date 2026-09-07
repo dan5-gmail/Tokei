@@ -1,0 +1,205 @@
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const VIEW = 260;
+const R = 108;
+const C = VIEW / 2;
+const DASH = 2 * Math.PI * R;
+
+function fmt(ms, withCs = true) {
+    const total = Math.max(0, Math.floor(ms));
+    const m = Math.floor(total / 60000);
+    const s = Math.floor((total % 60000) / 1000);
+    const cs = Math.floor((total % 1000) / 10);
+    const mm = String(m).padStart(2, "0");
+    const ss = String(s).padStart(2, "0");
+    if (!withCs) return `${mm}:${ss}`;
+    return `${mm}:${ss}.${String(cs).padStart(2, "0")}`;
+}
+
+export default function Stopwatch() {
+    const [elapsed, setElapsed] = useState(0);
+    const [running, setRunning] = useState(false);
+    const [laps, setLaps] = useState([]);
+    const startRef = useRef(0); // performance.now() at run start
+    const baseRef = useRef(0); // accumulated ms before the current run
+
+    // ticking loop (throttled to ~30fps)
+    useEffect(() => {
+        if (!running) return;
+        startRef.current = performance.now();
+        let raf;
+        let last = 0;
+        const tick = (t) => {
+            if (t - last >= 30) {
+                last = t;
+                setElapsed(baseRef.current + (performance.now() - startRef.current));
+            }
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [running]);
+
+    const now = () =>
+        running ? baseRef.current + (performance.now() - startRef.current) : elapsed;
+
+    const stop = () => {
+        if (!running) return;
+        baseRef.current += performance.now() - startRef.current;
+        setElapsed(baseRef.current);
+        setRunning(false);
+    };
+    const start = () => {
+        if (!running) setRunning(true);
+    };
+    const toggle = () => (running ? stop() : start());
+    const lap = () => {
+        const cur = now();
+        if (cur <= 0) return;
+        setLaps((ls) => [
+            {
+                n: ls.length + 1,
+                total: cur,
+                delta: cur - (ls.length ? ls[0].total : 0),
+            },
+            ...ls,
+        ]);
+    };
+    const reset = () => {
+        setRunning(false);
+        baseRef.current = 0;
+        setElapsed(0);
+        setLaps([]);
+    };
+
+    // stable refs for the keyboard shortcuts
+    const toggleRef = useRef(toggle);
+    const lapRef = useRef(lap);
+    const resetRef = useRef(reset);
+    toggleRef.current = toggle;
+    lapRef.current = lap;
+    resetRef.current = reset;
+
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                toggleRef.current();
+            } else if (e.key === "l" || e.key === "L") {
+                lapRef.current();
+            } else if (e.key === "r" || e.key === "R") {
+                resetRef.current();
+            }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
+
+    const pct = (elapsed % 60000) / 60000;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="flex flex-col items-center"
+        >
+            <div className="relative">
+                <svg
+                    viewBox={`0 0 ${VIEW} ${VIEW}`}
+                    className="w-56 h-56 sm:w-64 sm:h-64 -rotate-90"
+                    aria-hidden="true"
+                >
+                    <defs>
+                        <linearGradient id="swGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="rgba(94,234,212,0.9)" />
+                            <stop offset="100%" stopColor="rgba(139,92,246,0.9)" />
+                        </linearGradient>
+                    </defs>
+                    <circle
+                        cx={C}
+                        cy={C}
+                        r={R}
+                        fill="none"
+                        stroke="rgba(148,163,184,0.12)"
+                        strokeWidth="1"
+                    />
+                    <circle
+                        cx={C}
+                        cy={C}
+                        r={R}
+                        fill="none"
+                        stroke="url(#swGrad)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeDasharray={DASH}
+                        strokeDashoffset={DASH * (1 - pct)}
+                    />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center select-none">
+                    <span className="font-display font-extralight text-3xl sm:text-4xl tabular-nums text-slate-100">
+                        {fmt(elapsed)}
+                    </span>
+                    <span className="mt-3 text-[0.6rem] tracking-[0.6em] uppercase text-slate-400/60">
+                        Stopwatch
+                    </span>
+                </div>
+            </div>
+
+            <div className="mt-6 sm:mt-8 flex items-center gap-2 sm:gap-3">
+                <SwBtn onClick={toggle} primary>
+                    {running ? "停止" : "開始"}
+                </SwBtn>
+                <SwBtn onClick={lap} disabled={elapsed <= 0}>
+                    ラップ
+                </SwBtn>
+                <SwBtn onClick={reset} disabled={elapsed <= 0 && laps.length === 0}>
+                    リセット
+                </SwBtn>
+            </div>
+
+            <div className="w-full max-w-xs mt-5 flex flex-col gap-1.5 max-h-32 overflow-y-auto">
+                <AnimatePresence initial={false}>
+                    {laps.map((l) => (
+                        <motion.div
+                            key={l.n}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="flex items-center justify-between text-xs tabular-nums px-4 py-1.5 rounded-full bg-slate-800/30 border border-slate-600/15"
+                        >
+                            <span className="tracking-[0.3em] text-slate-400/70">
+                                LAP {String(l.n).padStart(2, "0")}
+                            </span>
+                            <span className="text-teal-300/80">{fmt(l.delta)}</span>
+                            <span className="text-slate-400/50">{fmt(l.total, false)}</span>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+
+            <p className="mt-4 text-[0.6rem] tracking-[0.35em] text-slate-500/70 uppercase">
+                Space 開始/停止 · L ラップ · R リセット
+            </p>
+        </motion.div>
+    );
+}
+
+function SwBtn({ onClick, disabled, primary, children }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`min-h-[40px] px-6 rounded-full text-sm tracking-[0.3em] border transition-all duration-500 ${disabled
+                    ? "opacity-30 cursor-default"
+                    : primary
+                        ? "border-teal-300/40 bg-teal-500/15 text-slate-100"
+                        : "border-slate-600/20 bg-slate-800/30 text-slate-400/70 hover:text-slate-200"
+                }`}
+        >
+            {children}
+        </button>
+    );
+}

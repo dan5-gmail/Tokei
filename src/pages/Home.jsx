@@ -1,23 +1,22 @@
-// @ts-nocheck
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import AtmosphereLayer from "@/components/clock/AtmosphereLayer";
 import JSTClock from "@/components/clock/JSTClock";
 import TimerRing from "@/components/clock/TimerRing";
 import PomodoroRing from "@/components/clock/PomodoroRing";
+import Stopwatch from "@/components/clock/Stopwatch";
 import AtmosphereBar from "@/components/clock/AtmosphereBar";
-import MusicPlayer from "@/components/audio/MusicPlayer";
+import CityGlobe, { CITIES } from "@/components/clock/CityGlobe";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
-  const [view, setView] = useState("clock");
+  const [view, setView] = useState("clock"); // clock | timer | pomodoro
+  const [city, setCity] = useState(CITIES[0]);
   const [mood, setMood] = useState("mist");
   const [cursor, setCursor] = useState({ x: -200, y: -200 });
-
   const [hour, setHour] = useState(
     parseInt(
       new Intl.DateTimeFormat("en-GB", {
-        timeZone: "Asia/Tokyo",
+        timeZone: city.tz,
         hour: "2-digit",
         hour12: false,
       }).format(new Date()),
@@ -25,48 +24,38 @@ export default function Home() {
     )
   );
 
-  // 時刻を1分ごとに更新
+  // update hour periodically for ambient hue
   useEffect(() => {
     const id = setInterval(() => {
       const h = parseInt(
         new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Asia/Tokyo",
+          timeZone: city.tz,
           hour: "2-digit",
           hour12: false,
         }).format(new Date()),
         10
       );
-
       setHour(h);
     }, 60000);
-
     return () => clearInterval(id);
-  }, []);
+  }, [city]);
 
-  // マウスカーソル追従
+  // lofi pulse visual + magnetic cursor (desktop only)
+  /**
+   * @param {React.MouseEvent} e
+   */
   const onMove = (e) => {
-    setCursor({
-      x: e.clientX,
-      y: e.clientY,
-    });
+    setCursor({ x: e.clientX, y: e.clientY });
   };
 
   return (
     <div
-      className="relative w-full h-screen overflow-hidden"
+      className="relative w-screen h-screen overflow-hidden"
       onMouseMove={onMove}
     >
-      {/* ================================
-          Background / Atmosphere
-          ================================ */}
-      <AtmosphereLayer
-        mood={mood}
-        hour={hour}
-      />
+      <AtmosphereLayer mood={mood} hour={hour} />
 
-      {/* ================================
-          Magnetic cursor
-          ================================ */}
+      {/* magnetic cursor */}
       <div
         className="pointer-events-none fixed z-30 w-10 h-10 rounded-full blur-xl transition-transform duration-300 ease-out hidden sm:block"
         style={{
@@ -78,107 +67,66 @@ export default function Home() {
         }}
       />
 
-      {/* ================================
-          Top mode toggle
-          ================================ */}
+      {/* top mode toggle */}
       <div className="fixed top-6 sm:top-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 p-1 rounded-full border border-slate-600/15 bg-slate-900/30 backdrop-blur-md">
-        <ModeBtn
-          active={view === "clock"}
-          onClick={() => setView("clock")}
-        >
+        <ModeBtn active={view === "clock"} onClick={() => setView("clock")}>
           時計
         </ModeBtn>
-
-        <ModeBtn
-          active={view === "timer"}
-          onClick={() => setView("timer")}
-        >
+        <ModeBtn active={view === "timer"} onClick={() => setView("timer")}>
           タイマー
         </ModeBtn>
-
-        <ModeBtn
-          active={view === "pomodoro"}
-          onClick={() => setView("pomodoro")}
-        >
+        <ModeBtn active={view === "pomodoro"} onClick={() => setView("pomodoro")}>
           ポモドーロ
+        </ModeBtn>
+        <ModeBtn active={view === "stopwatch"} onClick={() => setView("stopwatch")}>
+          ストップウォッチ
         </ModeBtn>
       </div>
 
-      {/* ================================
-          Main content
-          ================================ */}
+      {/* main content */}
       <main className="relative z-10 w-full h-full flex items-center justify-center px-4">
         <AnimatePresence mode="wait">
-          {/* 時計 */}
           {view === "clock" ? (
             <motion.section
               key="clock"
-              initial={{
-                opacity: 0,
-                scale: 0.98,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 1.02,
-              }}
-              transition={{
-                duration: 1,
-                ease: "easeInOut",
-              }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
               className="w-full"
             >
-              <JSTClock />
+              <JSTClock timezone={city.tz} label={city.en} />
+              <CityGlobe city={city} setCity={setCity} />
             </motion.section>
-
           ) : view === "timer" ? (
-            /* タイマー */
             <motion.section
               key="timer"
-              initial={{
-                opacity: 0,
-                scale: 0.98,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 1.02,
-              }}
-              transition={{
-                duration: 1,
-                ease: "easeInOut",
-              }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
               className="w-full flex justify-center"
             >
               <TimerRing />
             </motion.section>
-
+          ) : view === "stopwatch" ? (
+            <motion.section
+              key="stopwatch"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+              className="w-full flex justify-center"
+            >
+              <Stopwatch />
+            </motion.section>
           ) : (
-            /* ポモドーロ */
             <motion.section
               key="pomodoro"
-              initial={{
-                opacity: 0,
-                scale: 0.98,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 1.02,
-              }}
-              transition={{
-                duration: 1,
-                ease: "easeInOut",
-              }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
               className="w-full flex justify-center"
             >
               <PomodoroRing />
@@ -187,24 +135,9 @@ export default function Home() {
         </AnimatePresence>
       </main>
 
-      {/* ================================
-          Atmosphere controls
-          ================================ */}
-      <AtmosphereBar
-        mood={mood}
-        setMood={setMood}
-      />
+      <AtmosphereBar mood={mood} setMood={setMood} />
 
-      {/* ================================
-          Music Player
-          ================================ */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
-        <MusicPlayer />
-      </div>
-
-      {/* ================================
-          Brand mark
-          ================================ */}
+      {/* brand mark */}
       <div className="fixed top-6 left-6 sm:left-10 z-20 pointer-events-none">
         <span className="font-display text-xs tracking-[0.5em] text-slate-400/50 uppercase">
           Chronometer
@@ -214,11 +147,13 @@ export default function Home() {
   );
 }
 
-function ModeBtn({
-  active,
-  onClick,
-  children,
-}) {
+/**
+ * @param {object} props
+ * @param {boolean} props.active
+ * @param {() => void} props.onClick
+ * @param {React.ReactNode} props.children
+ */
+function ModeBtn({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}

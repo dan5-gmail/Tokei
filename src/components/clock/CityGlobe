@@ -1,0 +1,578 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import LAND from "./land-data.json";
+
+export const CITIES = [
+    { key: "tokyo", label: "東京", en: "Japan Standard Time", tz: "Asia/Tokyo", lat: 35.68, lon: 139.69 },
+    { key: "seoul", label: "ソウル", en: "Seoul", tz: "Asia/Seoul", lat: 37.57, lon: 126.98 },
+    { key: "shanghai", label: "上海", en: "Shanghai", tz: "Asia/Shanghai", lat: 31.23, lon: 121.47 },
+    { key: "singapore", label: "シンガポール", en: "Singapore", tz: "Asia/Singapore", lat: 1.35, lon: 103.82 },
+    { key: "sydney", label: "シドニー", en: "Sydney", tz: "Australia/Sydney", lat: -33.87, lon: 151.21 },
+    { key: "auckland", label: "オークランド", en: "Auckland", tz: "Pacific/Auckland", lat: -36.85, lon: 174.76 },
+    { key: "delhi", label: "デリー", en: "Delhi", tz: "Asia/Kolkata", lat: 28.61, lon: 77.21 },
+    { key: "dubai", label: "ドバイ", en: "Dubai", tz: "Asia/Dubai", lat: 25.2, lon: 55.27 },
+    { key: "moscow", label: "モスクワ", en: "Moscow", tz: "Europe/Moscow", lat: 55.76, lon: 37.62 },
+    { key: "istanbul", label: "イスタンブール", en: "Istanbul", tz: "Europe/Istanbul", lat: 41.01, lon: 28.98 },
+    { key: "cairo", label: "カイロ", en: "Cairo", tz: "Africa/Cairo", lat: 30.04, lon: 31.24 },
+    { key: "nairobi", label: "ナイロビ", en: "Nairobi", tz: "Africa/Nairobi", lat: -1.29, lon: 36.82 },
+    { key: "london", label: "ロンドン", en: "London", tz: "Europe/London", lat: 51.51, lon: -0.13 },
+    { key: "paris", label: "パリ", en: "Paris", tz: "Europe/Paris", lat: 48.86, lon: 2.35 },
+    { key: "newyork", label: "ニューヨーク", en: "New York", tz: "America/New_York", lat: 40.71, lon: -74.01 },
+    { key: "la", label: "ロサンゼルス", en: "Los Angeles", tz: "America/Los_Angeles", lat: 34.05, lon: -118.24 },
+    { key: "mexico", label: "メキシコシティ", en: "Mexico City", tz: "America/Mexico_City", lat: 19.43, lon: -99.13 },
+    { key: "saopaulo", label: "サンパウロ", en: "São Paulo", tz: "America/Sao_Paulo", lat: -23.55, lon: -46.63 },
+    { key: "buenosaires", label: "ブエノスアイレス", en: "Buenos Aires", tz: "America/Argentina/Buenos_Aires", lat: -34.6, lon: -58.38 },
+    { key: "honolulu", label: "ホノルル", en: "Honolulu", tz: "Pacific/Honolulu", lat: 21.31, lon: -157.86 },
+];
+
+const DEG = Math.PI / 180;
+const VIEW = 220;
+const R = 100;
+const CX = VIEW / 2;
+const CY = VIEW / 2;
+const HIT = 13;
+
+// canvas internals — scaled to match the SVG viewBox geometry exactly
+const CW = 264; // canvas backing size
+const CC = CW / 2;
+const R_PX = 120; // 120/264 === 100/220
+const BM_W = 1024;
+const BM_H = 512;
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// orthographic projection; z >= 0 means the point faces the viewer
+function project(lat, lon, lam, phi) {
+    const la = lat * DEG;
+    const lo = lon * DEG + lam * DEG;
+    const p = phi * DEG;
+    const sp = Math.sin(p);
+    const cp = Math.cos(p);
+    const z = sp * Math.sin(la) + cp * Math.cos(la) * Math.cos(lo);
+    const x = CX + R * (Math.cos(la) * Math.sin(lo));
+    const y = CY - R * (cp * Math.sin(la) - sp * Math.cos(la) * Math.cos(lo));
+    return { x, y, z, lat, lon };
+}
+
+// 12 meridians + 5 parallels (equator is index 14)
+function graticule(lam, phi) {
+    const segs = [];
+    const line = (samples) => {
+        let d = "";
+        let pen = false;
+        for (const [la, lo] of samples) {
+            const pt = project(la, lo, lam, phi);
+            if (pt.z >= 0) {
+                d += `${pen ? "L" : "M"}${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
+                pen = true;
+            } else {
+                pen = false;
+            }
+        }
+        return d;
+    };
+    for (let lon = -180; lon < 180; lon += 30) {
+        const s = [];
+        for (let lat = -86; lat <= 86; lat += 4) s.push([lat, lon]);
+        segs.push(line(s));
+    }
+    for (let lat = -60; lat <= 60; lat += 30) {
+        const s = [];
+        for (let lon = -180; lon <= 180; lon += 4) s.push([lat, lon]);
+        segs.push(line(s));
+    }
+    return segs;
+}
+
+// direction of the sun (unit vector, geographic coords) for the given instant
+function sunVec(date) {
+    const utcH =
+        date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+    const lonSS = -15 * (utcH - 12);
+    const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+    const doy = (date.getTime() - start) / 86400000;
+    const decl = -23.44 * Math.cos(((2 * Math.PI) / 365.25) * (doy + 10));
+    const cd = Math.cos(decl * DEG);
+    const sd = Math.sin(decl * DEG);
+    const lonS = lonSS * DEG;
+    return { X: cd * Math.cos(lonS), Y: cd * Math.sin(lonS), Z: sd };
+}
+
+// fixed star field (sky positions; shown only over the globe's night side)
+const STARS = (() => {
+    let seed = 20260905;
+    const rnd = () => {
+        seed = (seed * 16807) % 2147483647;
+        return seed / 2147483647;
+    };
+    const list = [];
+    for (let i = 0; i < 72; i++) {
+        const ang = rnd() * 2 * Math.PI;
+        const rad = Math.sqrt(rnd()) * 0.94;
+        const ix = Math.cos(ang) * rad;
+        const iy = Math.sin(ang) * rad;
+        const iz = Math.sqrt(Math.max(0, 1 - ix * ix - iy * iy));
+        list.push({
+            ix,
+            iy,
+            iz,
+            size: 0.7 + rnd() * 0.9,
+            phase: rnd() * 2 * Math.PI,
+            speed: 0.8 + rnd() * 1.6,
+        });
+    }
+    return list;
+})();
+
+export default function CityGlobe({ city, setCity }) {
+    const [now, setNow] = useState(() => new Date());
+    const rotRef = useRef({
+        lam: -CITIES[0].lon,
+        phi: clamp(CITIES[0].lat * 0.55, -45, 45),
+    });
+    const modeRef = useRef("idle");
+    const targetRef = useRef(null);
+    const idleUntilRef = useRef(performance.now() + 3200);
+    const draggingRef = useRef(false);
+    const distRef = useRef(0);
+    const lastRef = useRef(null);
+    const canvasRef = useRef(null);
+    const svgRef = useRef(null);
+    const gridRef = useRef(null);
+    const dotsRef = useRef(null);
+    const labelsRef = useRef(null);
+    const hoverRef = useRef(null);
+
+    // land mask: equirectangular bitmap built once from the land polygons
+    const mask = useMemo(() => {
+        const c = document.createElement("canvas");
+        c.width = BM_W;
+        c.height = BM_H;
+        const g = c.getContext("2d");
+        g.fillStyle = "#fff";
+        for (const ring of LAND.rings) {
+            g.beginPath();
+            for (let i = 0; i < ring.length; i += 2) {
+                const x = ((ring[i] + 180) / 360) * BM_W;
+                const y = ((90 - ring[i + 1]) / 180) * BM_H;
+                if (i === 0) g.moveTo(x, y);
+                else g.lineTo(x, y);
+            }
+            g.closePath();
+            g.fill();
+        }
+        const data = g.getImageData(0, 0, BM_W, BM_H).data;
+        const m = new Uint8Array(BM_W * BM_H);
+        for (let i = 0; i < m.length; i++) m[i] = data[i * 4] > 120 ? 1 : 0;
+        return m;
+    }, []);
+
+    // per-pixel view geometry for the canvas globe (computed once)
+    const pixels = useMemo(() => {
+        const ix = [];
+        const iy = [];
+        const iz = [];
+        const idx = [];
+        const edge = [];
+        for (let y = 0; y < CW; y++) {
+            for (let x = 0; x < CW; x++) {
+                const vx = (x + 0.5 - CC) / R_PX;
+                const vy = (CC - y - 0.5) / R_PX;
+                const r2 = vx * vx + vy * vy;
+                if (r2 > 1.15) continue;
+                const iz2 = 1 - r2;
+                const vz = iz2 > 0 ? Math.sqrt(iz2) : 0;
+                const e = iz2 > 0 ? 1 : clamp(1 - (Math.sqrt(r2) - 1) * R_PX, 0, 1);
+                ix.push(vx);
+                iy.push(vy);
+                iz.push(vz);
+                idx.push((y * CW + x) * 4);
+                edge.push(e);
+            }
+        }
+        return {
+            n: ix.length,
+            ix: Float32Array.from(ix),
+            iy: Float32Array.from(iy),
+            iz: Float32Array.from(iz),
+            idx: Uint32Array.from(idx),
+            edge: Float32Array.from(edge),
+        };
+    }, []);
+
+    // fresh local time for day/night dot brightness
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), 30000);
+        return () => clearInterval(id);
+    }, []);
+
+    const hourOf = (tz) =>
+        parseInt(
+            new Intl.DateTimeFormat("en-GB", {
+                timeZone: tz,
+                hour: "2-digit",
+                hour12: false,
+            }).format(now),
+            10
+        ) % 24;
+
+    const dotOpacity = (tz, active) => {
+        const h = hourOf(tz);
+        if (active) return h >= 6 && h < 18 ? 1 : 0.9;
+        if (h >= 6 && h < 18) return 0.9;
+        if ((h >= 5 && h < 6) || (h >= 18 && h < 19)) return 0.65;
+        return 0.45;
+    };
+
+    // dot styling: active pulse, day/night brightness, hover size
+    useEffect(() => {
+        const gs = dotsRef.current ? dotsRef.current.children : [];
+        CITIES.forEach((c, i) => {
+            const g = gs[i];
+            if (!g) return;
+            const active = c.key === city.key;
+            const pulse = g.children[0];
+            const dot = g.children[1];
+            pulse.style.display = active ? "" : "none";
+            dot.setAttribute("fill", active ? "#A78BFA" : "#5EEAD4");
+            dot.setAttribute("opacity", String(dotOpacity(c.tz, active)));
+            dot.setAttribute(
+                "r",
+                active ? "3.4" : hoverRef.current === c.key ? "3" : "2.4"
+            );
+        });
+    }, [city, now]);
+
+    // animation loop: renders the globe imperatively (no per-frame React renders)
+    useEffect(() => {
+        const reduced =
+            window.matchMedia &&
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const ctx = canvasRef.current
+            ? canvasRef.current.getContext("2d")
+            : null;
+        const img = ctx ? ctx.createImageData(CW, CW) : null;
+        const buf = img ? img.data : null;
+        const gridEls = gridRef.current ? [...gridRef.current.children] : [];
+        const dotGs = dotsRef.current ? [...dotsRef.current.children] : [];
+        const labelEls = labelsRef.current ? [...labelsRef.current.children] : [];
+        let raf;
+        let prev = performance.now();
+        let acc = 33; // draw immediately
+        const step = (t) => {
+            const dt = Math.min(64, t - prev);
+            prev = t;
+            const rot = rotRef.current;
+            if (modeRef.current === "auto" && !reduced) {
+                rot.lam += dt * 0.0032;
+            } else if (modeRef.current === "to" && targetRef.current) {
+                const tgt = targetRef.current;
+                const dl = ((tgt.lam - rot.lam + 540) % 360) - 180;
+                rot.lam += dl * 0.09;
+                rot.phi += (tgt.phi - rot.phi) * 0.09;
+                if (Math.abs(dl) < 0.5 && Math.abs(tgt.phi - rot.phi) < 0.5) {
+                    modeRef.current = "idle";
+                    idleUntilRef.current = t + 2600;
+                }
+            } else if (modeRef.current === "idle" && t >= idleUntilRef.current) {
+                modeRef.current = "auto";
+            }
+
+            acc += dt;
+            if (acc >= 33) {
+                acc = 0;
+                const { lam, phi } = rotRef.current;
+                const p = phi * DEG;
+                const cp = Math.cos(p);
+                const sp = Math.sin(p);
+                const cL = Math.cos(lam * DEG);
+                const sL = Math.sin(lam * DEG);
+
+                // --- canvas globe: land + day/night shading ---
+                if (ctx && buf) {
+                    const sun = sunVec(new Date());
+                    const { n, ix: IX, iy: IY, iz: IZ, idx: IDX, edge: EDGE } = pixels;
+                    for (let k = 0; k < n; k++) {
+                        const vx = IX[k];
+                        const vy = IY[k];
+                        const vz = IZ[k];
+                        const W = cp * vz - sp * vy; // cos(lat)·cos(view lon)
+                        const Z = sp * vz + cp * vy; // geographic Z
+                        const X = W * cL + vx * sL; // geographic X
+                        const Y = vx * cL - W * sL; // geographic Y
+                        const lon = Math.atan2(Y, X);
+                        const zc = Z > 1 ? 1 : Z < -1 ? -1 : Z;
+                        const lat = Math.asin(zc);
+                        let col = ((lon + Math.PI) * (BM_W / (2 * Math.PI))) | 0;
+                        if (col < 0) col = 0;
+                        else if (col >= BM_W) col = BM_W - 1;
+                        let row = ((Math.PI / 2 - lat) * (BM_H / Math.PI)) | 0;
+                        if (row < 0) row = 0;
+                        else if (row >= BM_H) row = BM_H - 1;
+                        const land = mask[row * BM_W + col];
+                        const elev = sun.X * X + sun.Y * Y + sun.Z * Z;
+                        let tB = elev * 12 + 0.5; // smooth terminator (~±5°)
+                        tB = tB < 0 ? 0 : tB > 1 ? 1 : tB;
+                        const br = 0.45 + 0.55 * tB; // night side is slightly darker
+                        const i4 = IDX[k];
+                        if (land) {
+                            buf[i4] = (86 + 42 * vz) * br;
+                            buf[i4 + 1] = (99 + 46 * vz) * br;
+                            buf[i4 + 2] = (128 + 52 * vz) * br;
+                        } else {
+                            buf[i4] = (20 + 18 * vz) * br;
+                            buf[i4 + 1] = (25 + 23 * vz) * br;
+                            buf[i4 + 2] = (54 + 34 * vz) * br;
+                        }
+                        buf[i4 + 3] = 255 * EDGE[k];
+                    }
+                    ctx.putImageData(img, 0, 0);
+                    // stars, twinkling over the night side
+                    for (const s of STARS) {
+                        const W = cp * s.iz - sp * s.iy;
+                        const Z = sp * s.iz + cp * s.iy;
+                        const X = W * cL + s.ix * sL;
+                        const Y = s.ix * cL - W * sL;
+                        const elev = sun.X * X + sun.Y * Y + sun.Z * Z;
+                        if (elev > -0.02) continue;
+                        const fade = Math.min(1, -elev * 10);
+                        const tw = 0.5 + 0.5 * Math.sin(t * 0.001 * s.speed + s.phase);
+                        ctx.fillStyle = `rgba(226,232,240,${(fade * (0.3 + 0.5 * tw)).toFixed(3)})`;
+                        ctx.beginPath();
+                        ctx.arc(CC + s.ix * R_PX, CC - s.iy * R_PX, s.size, 0, 6.2832);
+                        ctx.fill();
+                    }
+                }
+
+                // --- SVG overlays: graticule, city dots, labels ---
+                const segs = graticule(lam, phi);
+                for (let i = 0; i < gridEls.length; i++) {
+                    const d = segs[i] || "";
+                    gridEls[i].setAttribute("d", d);
+                    gridEls[i].style.display = d ? "" : "none";
+                }
+                for (let i = 0; i < dotGs.length; i++) {
+                    const c = CITIES[i];
+                    const pt = project(c.lat, c.lon, lam, phi);
+                    const visible = pt.z >= 0;
+                    const g = dotGs[i];
+                    g.style.display = visible ? "" : "none";
+                    if (visible) {
+                        const x = pt.x.toFixed(1);
+                        const y = pt.y.toFixed(1);
+                        g.children[0].setAttribute("cx", x);
+                        g.children[0].setAttribute("cy", y);
+                        g.children[1].setAttribute("cx", x);
+                        g.children[1].setAttribute("cy", y);
+                    }
+                    const lbl = labelEls[i];
+                    const show =
+                        visible && (c.key === city.key || c.key === hoverRef.current);
+                    lbl.style.display = show ? "" : "none";
+                    if (show) {
+                        lbl.setAttribute("x", clamp(pt.x + 9, 34, VIEW - 34).toFixed(1));
+                        lbl.setAttribute("y", pt.y < 26 ? pt.y + 18 : pt.y - 9);
+                    }
+                }
+            }
+            raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(raf);
+    }, [city, mask, pixels]);
+
+    // rotate to the selected city whenever it changes
+    useEffect(() => {
+        targetRef.current = {
+            lam: -city.lon,
+            phi: clamp(city.lat * 0.55, -45, 45),
+        };
+        modeRef.current = "to";
+    }, [city.key]);
+
+    const pos = (e) => {
+        const rect = svgRef.current.getBoundingClientRect();
+        const k = VIEW / rect.width;
+        return { x: (e.clientX - rect.left) * k, y: (e.clientY - rect.top) * k };
+    };
+
+    const hitCity = (x, y) => {
+        const rot = rotRef.current;
+        for (const c of CITIES) {
+            const pt = project(c.lat, c.lon, rot.lam, rot.phi);
+            if (pt.z >= 0 && (pt.x - x) ** 2 + (pt.y - y) ** 2 < HIT * HIT) {
+                return c;
+            }
+        }
+        return null;
+    };
+
+    const setHoverDot = (key) => {
+        if (hoverRef.current === key) return;
+        const prevKey = hoverRef.current;
+        hoverRef.current = key;
+        const gs = dotsRef.current ? dotsRef.current.children : [];
+        CITIES.forEach((c, i) => {
+            if (c.key !== key && c.key !== prevKey) return;
+            const active = c.key === city.key;
+            gs[i].children[1].setAttribute(
+                "r",
+                active ? "3.4" : c.key === key ? "3" : "2.4"
+            );
+        });
+        if (svgRef.current) {
+            svgRef.current.style.cursor = key
+                ? "pointer"
+                : draggingRef.current
+                    ? "grabbing"
+                    : "grab";
+        }
+    };
+
+    const onPointerDown = (e) => {
+        try {
+            svgRef.current.setPointerCapture?.(e.pointerId);
+        } catch {
+            /* synthetic events may carry no active pointer */
+        }
+        draggingRef.current = true;
+        distRef.current = 0;
+        lastRef.current = { x: e.clientX, y: e.clientY };
+        modeRef.current = "drag";
+        if (svgRef.current) svgRef.current.style.cursor = "grabbing";
+    };
+
+    const onPointerMove = (e) => {
+        if (draggingRef.current) {
+            const dx = e.clientX - lastRef.current.x;
+            const dy = e.clientY - lastRef.current.y;
+            lastRef.current = { x: e.clientX, y: e.clientY };
+            distRef.current += Math.abs(dx) + Math.abs(dy);
+            rotRef.current.lam += dx * 0.4;
+            rotRef.current.phi = clamp(rotRef.current.phi + dy * 0.3, -60, 60);
+        } else {
+            const { x, y } = pos(e);
+            setHoverDot(hitCity(x, y)?.key ?? null);
+        }
+    };
+
+    const onPointerUp = (e) => {
+        if (!draggingRef.current) return;
+        draggingRef.current = false;
+        if (distRef.current < 8) {
+            const { x, y } = pos(e);
+            const hit = hitCity(x, y);
+            if (hit) setCity(hit);
+        }
+        modeRef.current = "idle";
+        idleUntilRef.current = performance.now() + 2200;
+        if (svgRef.current) svgRef.current.style.cursor = "grab";
+    };
+
+    return (
+        <div className="mt-1 flex flex-col items-center">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48">
+                <canvas
+                    ref={canvasRef}
+                    width={CW}
+                    height={CW}
+                    className="absolute inset-0 w-full h-full"
+                    aria-hidden="true"
+                />
+                <svg
+                    ref={svgRef}
+                    viewBox={`0 0 ${VIEW} ${VIEW}`}
+                    className="absolute inset-0 w-full h-full touch-none cursor-grab"
+                    role="img"
+                    aria-label="地球儀。ドラッグで回転、都市の点をタップするとその都市の時刻を表示します。"
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                    onPointerLeave={() => setHoverDot(null)}
+                >
+                    {/* rim + halo */}
+                    <circle
+                        cx={CX}
+                        cy={CY}
+                        r={R + 5}
+                        fill="none"
+                        stroke="rgba(139,92,246,0.12)"
+                        strokeWidth="4"
+                    />
+                    <circle
+                        cx={CX}
+                        cy={CY}
+                        r={R}
+                        fill="none"
+                        stroke="rgba(226,232,240,0.18)"
+                        strokeWidth="1"
+                    />
+
+                    {/* graticule */}
+                    <g ref={gridRef}>
+                        {Array.from({ length: 17 }, (_, i) => (
+                            <path
+                                key={i}
+                                fill="none"
+                                stroke={
+                                    i === 14 ? "rgba(226,232,240,0.14)" : "rgba(226,232,240,0.06)"
+                                }
+                                strokeWidth={i === 14 ? 0.8 : 0.6}
+                            />
+                        ))}
+                    </g>
+
+                    {/* city dots */}
+                    <g ref={dotsRef}>
+                        {CITIES.map((c) => (
+                            <g key={c.key}>
+                                <circle
+                                    r="7"
+                                    fill="none"
+                                    stroke="rgba(167,139,250,0.6)"
+                                    strokeWidth="1"
+                                    style={{ display: "none" }}
+                                >
+                                    <animate
+                                        attributeName="r"
+                                        values="6;13;6"
+                                        dur="2.4s"
+                                        repeatCount="indefinite"
+                                    />
+                                    <animate
+                                        attributeName="stroke-opacity"
+                                        values="0.6;0;0.6"
+                                        dur="2.4s"
+                                        repeatCount="indefinite"
+                                    />
+                                </circle>
+                                <circle data-city={c.key} r="2.4" fill="#5EEAD4" />
+                            </g>
+                        ))}
+                    </g>
+
+                    {/* labels */}
+                    <g ref={labelsRef}>
+                        {CITIES.map((c) => (
+                            <text
+                                key={c.key}
+                                fontSize="10"
+                                letterSpacing="2"
+                                fill="rgba(226,232,240,0.92)"
+                                stroke="rgba(5,8,20,0.9)"
+                                strokeWidth="3"
+                                paintOrder="stroke"
+                                style={{ display: "none" }}
+                            >
+                                {c.label}
+                            </text>
+                        ))}
+                    </g>
+                </svg>
+            </div>
+            <p className="mt-1 text-[0.6rem] sm:text-[0.65rem] tracking-[0.35em] text-slate-500/70 uppercase">
+                ドラッグで回転 · 都市をタップ
+            </p>
+        </div>
+    );
+}

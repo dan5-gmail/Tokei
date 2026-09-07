@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-function getJSTParts(now) {
-  // now is a Date; compute JST via toLocaleString with timeZone
+/**
+ * @param {Date} now
+ * @param {string} tz
+ */
+function getJSTParts(now, tz) {
   const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Tokyo",
+    timeZone: tz,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -17,9 +20,13 @@ function getJSTParts(now) {
   return { h, m, s };
 }
 
-function getJSTDate(now) {
+/**
+ * @param {Date} now
+ * @param {string} tz
+ */
+function getJSTDate(now, tz) {
   const fmt = new Intl.DateTimeFormat("ja-JP", {
-    timeZone: "Asia/Tokyo",
+    timeZone: tz,
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -28,6 +35,9 @@ function getJSTDate(now) {
   return fmt.format(now);
 }
 
+/**
+ * @param {number} hour
+ */
 function periodLabel(hour) {
   if (hour >= 5 && hour < 8) return "夜明けの静寂";
   if (hour >= 8 && hour < 12) return "朝の光";
@@ -37,7 +47,7 @@ function periodLabel(hour) {
   return "深夜の沈黙";
 }
 
-export default function JSTClock() {
+export default function JSTClock({ timezone = "Asia/Tokyo", label = "Japan Standard Time" }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -45,9 +55,9 @@ export default function JSTClock() {
     return () => clearInterval(id);
   }, []);
 
-  const { h, m, s } = getJSTParts(now);
+  const { h, m, s } = getJSTParts(now, timezone);
   const hourNum = parseInt(h, 10);
-  const dateStr = getJSTDate(now);
+  const dateStr = getJSTDate(now, timezone);
 
   return (
     <div className="flex flex-col items-center justify-center text-center select-none">
@@ -58,18 +68,18 @@ export default function JSTClock() {
         className="mb-6 sm:mb-10"
       >
         <span className="text-[0.7rem] sm:text-xs uppercase tracking-[0.6em] text-slate-400/80">
-          Japan Standard Time
+          {label}
         </span>
       </motion.div>
 
       <div className="flex items-end justify-center gap-1 sm:gap-3 leading-none">
-        <span className="font-display font-extralight text-[18vw] sm:text-[15vw] md:text-[14rem] text-slate-100 tabular-nums">
+        <span className="font-display font-extralight text-[16vw] sm:text-[12vw] md:text-[9.5rem] text-slate-100 tabular-nums">
           {h}
         </span>
-        <span className="font-display font-extralight text-[18vw] sm:text-[15vw] md:text-[14rem] text-slate-100/80">
+        <span className="font-display font-extralight text-[16vw] sm:text-[12vw] md:text-[9.5rem] text-slate-100/80">
           :
         </span>
-        <span className="font-display font-extralight text-[18vw] sm:text-[15vw] md:text-[14rem] text-slate-100 tabular-nums">
+        <span className="font-display font-extralight text-[16vw] sm:text-[12vw] md:text-[9.5rem] text-slate-100 tabular-nums">
           {m}
         </span>
         {/* vapor-trail seconds */}
