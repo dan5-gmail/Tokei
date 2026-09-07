@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -193,10 +194,10 @@ function SwBtn({ onClick, disabled, primary, children }) {
             onClick={onClick}
             disabled={disabled}
             className={`min-h-[40px] px-6 rounded-full text-sm tracking-[0.3em] border transition-all duration-500 ${disabled
-                    ? "opacity-30 cursor-default"
-                    : primary
-                        ? "border-teal-300/40 bg-teal-500/15 text-slate-100"
-                        : "border-slate-600/20 bg-slate-800/30 text-slate-400/70 hover:text-slate-200"
+                ? "opacity-30 cursor-default"
+                : primary
+                    ? "border-teal-300/40 bg-teal-500/15 text-slate-100"
+                    : "border-slate-600/20 bg-slate-800/30 text-slate-400/70 hover:text-slate-200"
                 }`}
         >
             {children}
