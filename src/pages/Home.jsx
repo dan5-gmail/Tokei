@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck 
 import React, { useState, useEffect, useRef } from "react";
 import AtmosphereLayer from "@/components/clock/AtmosphereLayer";
 import JSTClock from "@/components/clock/JSTClock";
