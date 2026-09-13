@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import React, { useEffect, useRef, useState } from "react";
 import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
 
@@ -74,7 +73,7 @@ export default function MusicPlayer() {
   };
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="relative z-50 pointer-events-auto flex items-center gap-3">
       <audio
         ref={audioRef}
         src={TRACKS[idx].url}
@@ -91,7 +90,7 @@ export default function MusicPlayer() {
       <button
         onClick={prev}
         aria-label="前の曲"
-        className="w-9 h-9 rounded-full bg-violet-500/20 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/30"
+        className="w-9 h-9 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
       >
         <SkipBack size={18} />
       </button>
@@ -100,7 +99,7 @@ export default function MusicPlayer() {
       <button
         onClick={toggle}
         aria-label={playing ? "一時停止" : "再生"}
-        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-violet-500/20 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/30"
+        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
         style={{
           boxShadow: "0 0 20px rgba(139,92,246,0.25)",
         }}
@@ -112,7 +111,7 @@ export default function MusicPlayer() {
       <button
         onClick={next}
         aria-label="次の曲"
-        className="w-9 h-9 rounded-full bg-violet-500/20 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/30"
+        className="w-9 h-9 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
       >
         <SkipForward size={18} />
       </button>
