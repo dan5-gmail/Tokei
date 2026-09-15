@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -218,10 +220,10 @@ export default function PomodoroRing() {
           <span
             key={n}
             className={`w-2 h-2 rounded-full transition-all duration-500 ${n < cycle
-                ? "bg-violet-400"
-                : n === cycle
-                  ? "bg-violet-300/70 scale-125"
-                  : "bg-slate-600/40"
+              ? "bg-violet-400"
+              : n === cycle
+                ? "bg-violet-300/70 scale-125"
+                : "bg-slate-600/40"
               }`}
           />
         ))}

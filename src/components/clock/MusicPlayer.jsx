@@ -4,6 +4,7 @@ import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
 
 import YouAndMe from "./You_and_Me.mp3";
 import Twilight from "./さみしいおばけと東京の月.mp3";
+import FourSide from "./FourSide.mp3";
 
 const TRACKS = [
   {
