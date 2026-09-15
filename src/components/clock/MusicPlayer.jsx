@@ -15,6 +15,11 @@ const TRACKS = [
     title: "Twilight",
     url: Twilight,
   },
+
+  {
+    title: "Four Side",
+    url: FourSide,
+  },
 ];
 
 export default function MusicPlayer() {
