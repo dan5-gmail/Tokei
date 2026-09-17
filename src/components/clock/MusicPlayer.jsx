@@ -5,6 +5,7 @@ import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
 import YouAndMe from "./You_and_Me.mp3";
 import Twilight from "./さみしいおばけと東京の月.mp3";
 import FourSide from "./FourSide.mp3";
+import Frostaks_Cold_Land from "./ヒャッコル寒冷地.mp3";
 
 const TRACKS = [
   {
@@ -20,6 +21,10 @@ const TRACKS = [
     title: "Four Side",
     url: FourSide,
   },
+  {
+    title: "Frostaks - Cold Land",
+    url: Frostaks_Cold_Land,
+  }
 ];
 
 export default function MusicPlayer() {
