@@ -6,6 +6,8 @@ import YouAndMe from "./You_and_Me.mp3";
 import Twilight from "./さみしいおばけと東京の月.mp3";
 import FourSide from "./FourSide.mp3";
 import Frostaks_Cold_Land from "./ヒャッコル寒冷地.mp3";
+import Silver_Snow_Story from "./Silver-Snow-Story.mp3";
+import Fallen_Star_Beach from "./Fallen-Star-Beach.mp3";
 
 const TRACKS = [
   {
@@ -24,6 +26,14 @@ const TRACKS = [
   {
     title: "Frostaks - Cold Land",
     url: Frostaks_Cold_Land,
+  },
+  {
+    title: "Silver-Snow-Story",
+    url: Silver_Snow_Story,
+  },
+  {
+    title: "Fallen-Star-Beach",
+    url: Fallen_Star_Beach,
   }
 ];
 
