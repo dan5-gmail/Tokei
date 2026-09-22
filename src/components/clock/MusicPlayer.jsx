@@ -40,102 +40,93 @@ const TRACKS = [
 export default function MusicPlayer() {
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
-
+  const [vol, setVol] = useState(0.8);
+  const [muted, setMuted] = useState(false);
   const audioRef = useRef(null);
 
-  // 曲が変わったとき
+  // keep the element's volume in sync
   useEffect(() => {
     const audio = audioRef.current;
+    if (audio) audio.volume = muted ? 0 : vol;
+  }, [vol, muted]);
 
+  // (re)load + play when the track changes
+  useEffect(() => {
+    const audio = audioRef.current;
     if (!audio) return;
-
     audio.load();
-
     if (playing) {
-      audio.play().catch(() => {
-        setPlaying(false);
-      });
+      audio.play().catch(() => setPlaying(false));
     }
   }, [idx]);
 
-  // 再生 / 一時停止
+  // play / pause when toggled
   useEffect(() => {
     const audio = audioRef.current;
-
     if (!audio) return;
-
     if (playing) {
-      audio.play().catch(() => {
-        setPlaying(false);
-      });
+      audio.play().catch(() => setPlaying(false));
     } else {
       audio.pause();
     }
   }, [playing]);
 
-  // 次の曲
-  const next = () => {
-    setIdx((i) => (i + 1) % TRACKS.length);
-  };
-
-  // 前の曲
-  const prev = () => {
-    setIdx((i) => (i - 1 + TRACKS.length) % TRACKS.length);
-  };
-
-  // 再生 / 一時停止
-  const toggle = () => {
-    setPlaying((p) => !p);
-  };
-
-  // 曲が終わったら次へ
-  const handleEnded = () => {
-    setIdx((i) => (i + 1) % TRACKS.length);
-  };
+  const next = () => setIdx((i) => (i + 1) % TRACKS.length);
+  const prev = () => setIdx((i) => (i - 1 + TRACKS.length) % TRACKS.length);
+  const toggle = () => setPlaying((p) => !p);
 
   return (
-    <div className="relative z-50 pointer-events-auto flex items-center gap-3">
-      <audio
-        ref={audioRef}
-        src={TRACKS[idx].url}
-        onEnded={handleEnded}
-        preload="auto"
-      />
-
-      {/* 曲名 */}
-      <div className="text-sm text-slate-100 min-w-[120px] text-center">
+    <div className="pointer-events-auto flex items-center gap-2 sm:gap-4 rounded-full border border-slate-200/10 bg-slate-900/40 backdrop-blur-xl px-3 sm:px-5 py-2 sm:py-3 shadow-2xl">
+      <audio ref={audioRef} src={TRACKS[idx].url} onEnded={next} />
+      <span className="hidden sm:block font-display text-xs tracking-[0.35em] text-slate-200/80 whitespace-nowrap max-w-[140px] truncate">
         {TRACKS[idx].title}
+      </span>
+      <div className="hidden sm:flex items-center gap-2 pl-1 sm:pl-2">
+        <button
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted || vol === 0 ? "ミュート解除" : "ミュート"}
+          className="w-8 h-8 rounded-full bg-slate-200/5 text-slate-300/70 hover:text-slate-100 flex items-center justify-center transition-colors"
+        >
+          {muted || vol === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={muted ? 0 : vol}
+          onChange={(e) => {
+            setVol(parseFloat(e.target.value));
+            setMuted(false);
+          }}
+          aria-label="音量"
+          className="w-16 lg:w-20 h-1 accent-violet-300 cursor-pointer"
+        />
       </div>
-
-      {/* 前の曲 */}
-      <button
-        onClick={prev}
-        aria-label="前の曲"
-        className="w-9 h-9 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
-      >
-        <SkipBack size={18} />
-      </button>
-
-      {/* 再生 / 一時停止 */}
-      <button
-        onClick={toggle}
-        aria-label={playing ? "一時停止" : "再生"}
-        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
-        style={{
-          boxShadow: "0 0 20px rgba(139,92,246,0.25)",
-        }}
-      >
-        {playing ? <Pause size={20} /> : <Play size={20} />}
-      </button>
-
-      {/* 次の曲 */}
-      <button
-        onClick={next}
-        aria-label="次の曲"
-        className="w-9 h-9 rounded-full bg-violet-500/25 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/40 cursor-pointer"
-      >
-        <SkipForward size={18} />
-      </button>
+      <div className="flex items-center gap-1.5 sm:gap-3">
+        <button
+          onClick={prev}
+          aria-label="前の曲"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-200/5 text-slate-300/70 hover:text-slate-100 flex items-center justify-center transition-colors"
+        >
+          <SkipBack size={15} />
+        </button>
+        <button
+          onClick={toggle}
+          aria-label={playing ? "停止" : "再生"}
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-violet-500/20 border border-violet-300/40 text-slate-100 flex items-center justify-center transition-all hover:bg-violet-500/30"
+          style={{ boxShadow: "0 0 20px rgba(139,92,246,0.25)" }}
+        >
+          {playing ? <Pause size={17} /> : <Play size={17} className="ml-0.5" />}
+        </button>
+        <button
+          onClick={next}
+          aria-label="次の曲"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-200/5 text-slate-300/70 hover:text-slate-100 flex items-center justify-center transition-colors"
+        >
+          <SkipForward size={15} />
+        </button>
+      </div>
     </div>
   );
 }

@@ -203,6 +203,84 @@
   }
 }
 
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, -8vh, 0);
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 0.9;
+  }
+
+  90% {
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translate3d(var(--sway, 30px), 112vh, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes star-twinkle {
+
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes meteor-streak {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+
+  3% {
+    opacity: 1;
+  }
+
+  12% {
+    transform: translate3d(var(--mx, -95vw), var(--my, 55vh), 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+
+  100% {
+    transform: translate3d(var(--mx, -95vw), var(--my, 55vh), 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+}
+
+@keyframes meteor-streak-mid {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+
+  3% {
+    opacity: 1;
+  }
+
+  5% {
+    opacity: 0.85;
+  }
+
+  8% {
+    transform: translate3d(var(--mx, -55vw), var(--my, 32vh), 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+
+  100% {
+    transform: translate3d(var(--mx, -55vw), var(--my, 32vh), 0) rotate(var(--rot, -17deg));
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
