@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from "react";
-import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
+import { SkipBack, SkipForward, Play, Pause, Volume2, VolumeX } from "lucide-react";
 
 import YouAndMe from "./You_and_Me.mp3";
 import Twilight from "./さみしいおばけと東京の月.mp3";
