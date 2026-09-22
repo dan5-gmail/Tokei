@@ -1,7 +1,9 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from "react";
 import Bubbles from "./Bubbles";
-import RainLayer from "./RainLayer";
+import RainLayer from "./RainLayer.jsx";
+import SnowLayer from "./SnowLayer";
+import SpaceLayer from "./SpaceLayer";
 
 const BG_URL = `${import.meta.env.BASE_URL}background.png`;
 
@@ -24,6 +26,18 @@ const MOODS = {
     halo: "rgba(251, 191, 114, 0.20)",
     speed: 44,
   },
+  snow: {
+    label: "雪",
+    tint: "rgba(226,232,240,0.12)",
+    halo: "rgba(226,232,240,0.20)",
+    speed: 30,
+  },
+  space: {
+    label: "宙",
+    tint: "rgba(99,102,241,0.14)",
+    halo: "rgba(99,102,241,0.24)",
+    speed: 50,
+  },
   void: {
     label: "静",
     tint: "rgba(15, 17, 26, 0.0)",
@@ -36,15 +50,16 @@ export default function AtmosphereLayer({ mood, hour }) {
   const moodCfg = MOODS[mood] || MOODS.mist;
   const mistRef = useRef(null);
 
+  // Hour-based ambient hue: cool blues at night, warm ambers at sunrise/sunset
   let ambient;
   if (hour >= 5 && hour < 8) {
-    ambient = "rgba(251, 191, 114, 0.12)";
+    ambient = "rgba(251, 191, 114, 0.12)"; // dawn
   } else if (hour >= 8 && hour < 17) {
-    ambient = "rgba(94, 234, 212, 0.05)";
+    ambient = "rgba(94, 234, 212, 0.05)"; // day, subtle
   } else if (hour >= 17 && hour < 20) {
-    ambient = "rgba(244, 114, 182, 0.10)";
+    ambient = "rgba(244, 114, 182, 0.10)"; // dusk
   } else {
-    ambient = "rgba(99, 102, 241, 0.14)";
+    ambient = "rgba(99, 102, 241, 0.14)"; // night
   }
 
   return (
@@ -59,10 +74,11 @@ export default function AtmosphereLayer({ mood, hour }) {
           backgroundImage: `url(${BG_URL})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 0.35,
+          opacity: mood === "space" ? 0.14 : 0.35,
           filter: "saturate(0.9) blur(2px)",
         }}
       />
+      {/* drifting mist */}
       <div
         ref={mistRef}
         className="absolute inset-0"
@@ -71,14 +87,20 @@ export default function AtmosphereLayer({ mood, hour }) {
           animation: `mist-drift ${moodCfg.speed}s ease-in-out infinite`,
         }}
       />
+      {/* floating bubbles */}
       <Bubbles />
+      {/* rain drops when the rain mood is active */}
       {mood === "rain" && <RainLayer />}
+      {mood === "snow" && <SnowLayer />}
+      {mood === "space" && <SpaceLayer />}
+      {/* mood tint */}
       <div
         className="absolute inset-0 transition-opacity duration-[3000ms]"
         style={{
           background: `linear-gradient(180deg, transparent 0%, ${moodCfg.tint} 100%)`,
         }}
       />
+      {/* vignette */}
       <div
         className="absolute inset-0"
         style={{

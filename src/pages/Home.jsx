@@ -1,4 +1,4 @@
-// @ts-nocheck 
+//@ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import AtmosphereLayer from "@/components/clock/AtmosphereLayer";
 import JSTClock from "@/components/clock/JSTClock";
@@ -42,9 +42,6 @@ export default function Home() {
   }, [city]);
 
   // lofi pulse visual + magnetic cursor (desktop only)
-  /**
-   * @param {React.MouseEvent} e
-   */
   const onMove = (e) => {
     setCursor({ x: e.clientX, y: e.clientY });
   };
@@ -148,19 +145,13 @@ export default function Home() {
   );
 }
 
-/**
- * @param {object} props
- * @param {boolean} props.active
- * @param {() => void} props.onClick
- * @param {React.ReactNode} props.children
- */
 function ModeBtn({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
       className={`min-h-[40px] px-6 rounded-full text-sm tracking-[0.3em] transition-all duration-500 ${active
-        ? "bg-slate-100/10 text-slate-100"
-        : "text-slate-400/60 hover:text-slate-200"
+          ? "bg-slate-100/10 text-slate-100"
+          : "text-slate-400/60 hover:text-slate-200"
         }`}
     >
       {children}

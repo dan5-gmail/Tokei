@@ -3,7 +3,7 @@ import React from "react";
 import { MOODS } from "./AtmosphereLayer";
 import MusicPlayer from "./MusicPlayer";
 
-const ORDER = ["mist", "rain", "dawn", "void"];
+const ORDER = ["mist", "rain", "snow", "dawn", "void", "space"];
 
 /**
  * @param {object} props
@@ -16,20 +16,18 @@ export default function AtmosphereBar({ mood, setMood }) {
       <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
         {ORDER.map((k) => {
           const active = mood === k;
-          // @ts-ignore
-          const moodItem = MOODS[k];
           return (
             <button
               key={k}
               onClick={() => setMood(k)}
-              aria-label={`雰囲気: ${moodItem ? moodItem.label : k}`}
+              aria-label={`雰囲気: ${MOODS[k].label}`}
               className={`min-w-[48px] min-h-[48px] w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-500 ${active
-                ? "border-violet-300/50 bg-violet-500/20 text-slate-100"
-                : "border-slate-600/20 bg-slate-800/30 text-slate-400/60 hover:text-slate-200"
+                  ? "border-violet-300/50 bg-violet-500/20 text-slate-100"
+                  : "border-slate-600/20 bg-slate-800/30 text-slate-400/60 hover:text-slate-200"
                 }`}
             >
               <span className="font-display text-sm tracking-widest">
-                {moodItem ? moodItem.label : k}
+                {MOODS[k].label}
               </span>
             </button>
           );
